@@ -5,6 +5,7 @@ import path from "path";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 export default defineConfig({
+  base: "/daspot/",
   plugins: [
     react(),
     tailwindcss(),
