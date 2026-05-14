@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,6 +17,8 @@ import gallery3 from "@/assets/gallery-3.png";
 import gallery4 from "@/assets/gallery-4.png";
 import gallery5 from "@/assets/gallery-5.png";
 import gallery6 from "@/assets/gallery-6.png";
+
+
 
 const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID as string | undefined;
 const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string | undefined;
@@ -86,12 +88,25 @@ function App() {
   const { toast } = useToast();
   const [isNavScrolled, setIsNavScrolled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (typeof window !== "undefined") {
-    window.addEventListener("scroll", () => {
+  // if (typeof window !== "undefined") {
+  //   window.addEventListener("scroll", () => {
+  //     setIsNavScrolled(window.scrollY > 50);
+  //   });
+  // }
+
+  useEffect(() => {
+    const handleScroll = () => {
       setIsNavScrolled(window.scrollY > 50);
-    });
-  }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -99,7 +114,7 @@ function App() {
       name: "",
       email: "",
       phone: "",
-      guests: 2,
+      guests: undefined,
       date: "",
       time: "",
     },
@@ -154,30 +169,113 @@ function App() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-white">
       {/* STICKY NAV */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isNavScrolled ? 'bg-background/80 backdrop-blur-md border-b border-border py-4' : 'bg-transparent py-6'}`}>
-        <div className="container mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src={daSpotLogo} alt="DA SPOT Logo" className="w-10 h-10 object-cover rounded-full border border-border" />
-            <span className="font-serif font-bold text-xl tracking-widest text-primary-foreground">DA SPOT</span>
+      <nav
+        className={`fixed top-0 w-full z-50 transition-all duration-300 ${isNavScrolled
+            ? "bg-background/80 backdrop-blur-md border-b border-border py-4"
+            : "bg-transparent py-6"
+          }`}
+      >
+        <div className="container mx-auto px-6">
+
+          {/* Top Navbar */}
+          <div className="flex items-center justify-between">
+
+            {/* Logo */}
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() =>
+                window.scrollTo({ top: 0, behavior: "smooth" })
+              }
+            >
+              <img
+                src={daSpotLogo}
+                alt="DA SPOT Logo"
+                className="w-10 h-10 object-cover rounded-full border border-border"
+              />
+
+              <span className="font-serif font-bold text-xl tracking-widest text-primary-foreground">
+                DA SPOT
+              </span>
+            </div>
+
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center gap-8">
+              {navLinks.map((link) => (
+                <button
+                  key={link.name}
+                  onClick={() => scrollTo(link.href.substring(1))}
+                  className="text-sm tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors relative group"
+                >
+                  {link.name}
+
+                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all group-hover:w-full"></span>
+                </button>
+              ))}
+
+              <button
+                onClick={() => scrollTo("reserve")}
+                className="px-6 py-2 border border-primary text-primary text-sm tracking-widest uppercase hover:bg-primary hover:text-white transition-all duration-300"
+              >
+                Reserve Table
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden text-foreground"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <div className="space-y-1">
+                <span
+                  className={`block h-0.5 w-6 bg-current transition-all ${mobileMenuOpen ? "rotate-45 translate-y-1.5" : ""
+                    }`}
+                ></span>
+
+                <span
+                  className={`block h-0.5 w-6 bg-current transition-all ${mobileMenuOpen ? "opacity-0" : ""
+                    }`}
+                ></span>
+
+                <span
+                  className={`block h-0.5 w-6 bg-current transition-all ${mobileMenuOpen ? "-rotate-45 -translate-y-1.5" : ""
+                    }`}
+                ></span>
+              </div>
+            </button>
           </div>
 
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+          {/* Mobile Dropdown */}
+          <div
+            className={`md:hidden overflow-hidden transition-all duration-300 ${mobileMenuOpen
+                ? "max-h-[500px] opacity-100 mt-6"
+                : "max-h-0 opacity-0"
+              }`}
+          >
+            <div className="flex flex-col gap-5 bg-background/95 backdrop-blur-md border border-border rounded-2xl p-6 shadow-xl">
+
+              {navLinks.map((link) => (
+                <button
+                  key={link.name}
+                  onClick={() => {
+                    scrollTo(link.href.substring(1));
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-sm tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors text-left"
+                >
+                  {link.name}
+                </button>
+              ))}
+
               <button
-                key={link.name}
-                onClick={() => scrollTo(link.href.substring(1))}
-                className="text-sm tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors relative group"
+                onClick={() => {
+                  scrollTo("reserve");
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full px-6 py-3 border border-primary text-primary text-sm tracking-widest uppercase hover:bg-primary hover:text-white transition-all duration-300 rounded-lg"
               >
-                {link.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all group-hover:w-full"></span>
+                Reserve Table
               </button>
-            ))}
-            <button
-              onClick={() => scrollTo('reserve')}
-              className="px-6 py-2 border border-primary text-primary text-sm tracking-widest uppercase hover:bg-primary hover:text-white transition-all duration-300"
-            >
-              Reserve Table
-            </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -368,7 +466,7 @@ function App() {
                       <Input
                         placeholder="Full Name"
                         {...field}
-                        className="bg-[#111] border-0 border-b border-border rounded-none px-0 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
+                        className="bg-[#111] border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
                       />
                     </FormControl>
                     <FormMessage />
@@ -386,7 +484,7 @@ function App() {
                         placeholder="Email Address"
                         type="email"
                         {...field}
-                        className="bg-[#111] border-0 border-b border-border rounded-none px-0 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
+                        className="bg-[#111]  border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
                       />
                     </FormControl>
                     <FormMessage />
@@ -404,7 +502,7 @@ function App() {
                         placeholder="Phone Number"
                         type="tel"
                         {...field}
-                        className="bg-[#111] border-0 border-b border-border rounded-none px-0 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
+                        className="bg-[#111] border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
                       />
                     </FormControl>
                     <FormMessage />
@@ -425,7 +523,8 @@ function App() {
                           min="1"
                           max="10"
                           {...field}
-                          className="bg-[#111] border-0 border-b border-border rounded-none px-0 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
+                          value={field.value ?? ""}
+                          className="bg-[#111] border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
                         />
                       </FormControl>
                       <FormMessage />
@@ -442,7 +541,7 @@ function App() {
                           type="date"
                           {...field}
                           min={new Date().toISOString().split("T")[0]}
-                          className="bg-[#111] border-0 border-b border-border rounded-none px-0 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary text-foreground transition-colors [color-scheme:dark]"
+                          className="bg-[#111] border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary text-foreground transition-colors [color-scheme:dark]"
                         />
                       </FormControl>
                       <FormMessage />
@@ -469,11 +568,10 @@ function App() {
                                 key={slot}
                                 type="button"
                                 onClick={() => field.onChange(slot)}
-                                className={`px-4 py-2 text-sm tracking-widest border transition-all duration-200 ${
-                                  field.value === slot
+                                className={`px-4 py-2 text-sm tracking-widest border transition-all duration-200 ${field.value === slot
                                     ? "border-primary bg-primary text-white shadow-[0_0_12px_rgba(255,46,46,0.4)]"
                                     : "border-border text-muted-foreground hover:border-primary/60 hover:text-primary"
-                                }`}
+                                  }`}
                               >
                                 {slot}
                               </button>

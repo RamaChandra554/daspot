@@ -5,7 +5,7 @@ import path from "path";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 export default defineConfig({
-  
+  base: "/daspot/",
   plugins: [react(), tailwindcss(),
     ViteImageOptimizer({
       png: { quality: 80 },
@@ -17,7 +17,6 @@ export default defineConfig({
       logStats: true,
     }),
   ],
-  base: "/daspot/",
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
