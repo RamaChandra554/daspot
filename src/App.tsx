@@ -570,7 +570,7 @@ function App() {
                     <div className="pt-2 space-y-4">
                       {(Object.entries(TIME_SLOTS) as [string, string[]][]).map(([period, slots]) => (
                         <div key={period}>
-                          <p className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground/90 mb-3">
+                          <p className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground/75 mb-3">
                             — {period} —
                           </p>
                           <div className="flex flex-wrap gap-2">
