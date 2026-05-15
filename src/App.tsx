@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FlipMenu } from "@/components/FlipMenu";
 import daSpotLogo from "@/assets/da-spot-logo.jpeg";
+import heroBg from "@/assets/image_1778811294437.png";
 import gallery1 from "@/assets/gallery-1.png";
 import gallery2 from "@/assets/gallery-2.png";
 import gallery3 from "@/assets/gallery-3.png";
@@ -291,7 +292,21 @@ function App() {
 
       {/* HERO SECTION */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,46,46,0.15)_0%,transparent_50%)] pointer-events-none"></div>
+        {/* Background image */}
+        <img
+          src={heroBg}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        {/* Dark base overlay — keeps text legible */}
+        <div className="absolute inset-0 bg-background/75"></div>
+        {/* Bottom fade so the section blends into the next */}
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent"></div>
+        {/* Top fade */}
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background to-transparent"></div>
+        {/* Existing red radial glow on top */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,46,46,0.18)_0%,transparent_60%)] pointer-events-none"></div>
         <motion.div
           variants={staggerContainer}
           initial="hidden"
