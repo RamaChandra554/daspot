@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import emailjs from "@emailjs/browser";
 import { motion, AnimatePresence, useScroll, useTransform, useInView, type Variants } from "framer-motion";
-import { Star, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, ChevronUp, X, CheckCircle2 } from "lucide-react";
+import { FaInstagram, FaWhatsapp, FaMapMarkerAlt } from "react-icons/fa";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -114,6 +115,8 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [activeSection, setActiveSection] = useState<string>("");
+  const [reservationSuccess, setReservationSuccess] = useState<{ name: string; date: string; time: string; guests: number } | null>(null);
   const touchStartX = useRef<number>(0);
   const { scrollY } = useScroll();
   const heroBgY = useTransform(scrollY, [0, 600], ["0%", "25%"]);
@@ -125,10 +128,17 @@ function App() {
   // }
 
   useEffect(() => {
+    const sections = ["about", "menubook", "gallery", "reviews", "reserve"];
     const handleScroll = () => {
       setIsNavScrolled(window.scrollY > 50);
+      let current = "";
+      for (const id of sections) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 140) current = id;
+      }
+      setActiveSection(current);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -178,11 +188,11 @@ function App() {
           EMAILJS_PUBLIC_KEY
         );
       }
-      toast({
-        title: "Reservation Confirmed",
-        description: EMAILJS_PUBLIC_KEY
-          ? `A confirmation has been sent to ${values.email}.`
-          : "Your table has been reserved. We'll see you soon.",
+      setReservationSuccess({
+        name: values.name,
+        date: new Date(values.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }),
+        time: values.time,
+        guests: values.guests,
       });
       form.reset();
     } catch {
@@ -235,17 +245,19 @@ function App() {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-8">
-              {navLinks.map((link) => (
-                <button
-                  key={link.name}
-                  onClick={() => scrollTo(link.href.substring(1))}
-                  className="text-sm tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors relative group"
-                >
-                  {link.name}
-
-                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all group-hover:w-full"></span>
-                </button>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = activeSection === link.href.substring(1);
+                return (
+                  <button
+                    key={link.name}
+                    onClick={() => scrollTo(link.href.substring(1))}
+                    className={`text-sm tracking-widest uppercase transition-colors relative group ${isActive ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+                  >
+                    {link.name}
+                    <span className={`absolute -bottom-1 left-0 h-px bg-primary transition-all ${isActive ? "w-full" : "w-0 group-hover:w-full"}`}></span>
+                  </button>
+                );
+              })}
 
               <button
                 onClick={() => scrollTo("reserve")}
@@ -288,18 +300,21 @@ function App() {
           >
             <div className="flex flex-col gap-5 bg-background/95 backdrop-blur-md border border-border rounded-2xl p-6 shadow-xl">
 
-              {navLinks.map((link) => (
-                <button
-                  key={link.name}
-                  onClick={() => {
-                    scrollTo(link.href.substring(1));
-                    setMobileMenuOpen(false);
-                  }}
-                  className="text-sm tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors text-left"
-                >
-                  {link.name}
-                </button>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = activeSection === link.href.substring(1);
+                return (
+                  <button
+                    key={link.name}
+                    onClick={() => {
+                      scrollTo(link.href.substring(1));
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`text-sm tracking-widest uppercase transition-colors text-left ${isActive ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+                  >
+                    {link.name}
+                  </button>
+                );
+              })}
 
               <button
                 onClick={() => {
@@ -513,6 +528,47 @@ function App() {
             </p>
           </div>
 
+          {reservationSuccess ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center py-8"
+            >
+              <div className="flex justify-center mb-6">
+                <CheckCircle2 size={64} className="text-primary" strokeWidth={1.25} />
+              </div>
+              <h3 className="font-serif text-3xl font-bold mb-3">You're All Set!</h3>
+              <p className="text-muted-foreground text-sm mb-8">Your table has been reserved. We look forward to seeing you.</p>
+              <div className="border border-white/[0.08] bg-[#111] p-6 mb-8 text-left space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground tracking-widest uppercase text-xs">Guest</span>
+                  <span className="font-medium">{reservationSuccess.name}</span>
+                </div>
+                <div className="w-full h-px bg-border"></div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground tracking-widest uppercase text-xs">Date</span>
+                  <span className="font-medium">{reservationSuccess.date}</span>
+                </div>
+                <div className="w-full h-px bg-border"></div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground tracking-widest uppercase text-xs">Time</span>
+                  <span className="font-medium">{reservationSuccess.time}</span>
+                </div>
+                <div className="w-full h-px bg-border"></div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground tracking-widest uppercase text-xs">Guests</span>
+                  <span className="font-medium">{reservationSuccess.guests}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setReservationSuccess(null)}
+                className="text-xs tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors"
+              >
+                Make Another Reservation
+              </button>
+            </motion.div>
+          ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -656,6 +712,7 @@ function App() {
               </p>
             </form>
           </Form>
+          )}
         </motion.div>
       </section>
 
@@ -664,9 +721,12 @@ function App() {
         <div className="container mx-auto px-6 text-center">
           <img src={daSpotLogo} alt="DA SPOT Logo" className="w-16 h-16 object-cover rounded-full mx-auto mb-6 opacity-80 grayscale" />
           <h2 className="font-serif font-bold text-2xl tracking-[0.2em] mb-2">DA SPOT</h2>
-          <p className="text-muted-foreground tracking-[0.3em] text-xs mb-10">ESTD 2024</p>
+          <p className="text-muted-foreground tracking-[0.3em] text-xs mb-3">ESTD 2024</p>
+          <p className="text-muted-foreground/70 text-xs mb-10">
+            <span className="text-primary/80">●</span> Open Daily: 12:00 PM – 11:00 PM
+          </p>
 
-          <div className="flex flex-wrap justify-center gap-6 mb-10">
+          <div className="flex flex-wrap justify-center gap-6 mb-8">
             {navLinks.map((link) => (
               <button
                 key={link.name}
@@ -676,6 +736,18 @@ function App() {
                 {link.name}
               </button>
             ))}
+          </div>
+
+          <div className="flex justify-center gap-5 mb-10">
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-muted-foreground/60 hover:text-primary transition-colors">
+              <FaInstagram size={18} />
+            </a>
+            <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="text-muted-foreground/60 hover:text-primary transition-colors">
+              <FaWhatsapp size={18} />
+            </a>
+            <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" aria-label="Google Maps" className="text-muted-foreground/60 hover:text-primary transition-colors">
+              <FaMapMarkerAlt size={18} />
+            </a>
           </div>
 
           <div className="w-24 h-px bg-primary/50 mx-auto mb-10"></div>
