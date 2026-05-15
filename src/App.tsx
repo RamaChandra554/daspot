@@ -3,8 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import emailjs from "@emailjs/browser";
-import { motion, type Variants } from "framer-motion";
-import { Star, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { Star, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -638,6 +638,24 @@ function App() {
           </p>
         </div>
       </footer>
+
+      {/* SCROLL TO TOP BUTTON */}
+      <AnimatePresence>
+        {isNavScrolled && (
+          <motion.button
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.25 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="fixed bottom-6 right-6 z-50 w-10 h-10 flex items-center justify-center bg-primary text-white shadow-[0_0_16px_rgba(255,46,46,0.35)] hover:bg-red-600 transition-colors"
+            data-testid="scroll-to-top"
+            aria-label="Scroll to top"
+          >
+            <ChevronUp size={20} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* LIGHTBOX MODAL */}
       {lightboxIndex !== null && (
