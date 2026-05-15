@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import emailjs from "@emailjs/browser";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, type Variants } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
@@ -92,6 +92,8 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const touchStartX = useRef<number>(0);
+  const { scrollY } = useScroll();
+  const heroBgY = useTransform(scrollY, [0, 600], ["0%", "25%"]);
 
   // if (typeof window !== "undefined") {
   //   window.addEventListener("scroll", () => {
@@ -293,11 +295,12 @@ function App() {
       {/* HERO SECTION */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Background image */}
-        <img
+        <motion.img
           src={heroBg}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          style={{ y: heroBgY }}
+          className="absolute inset-0 w-full h-[120%] -top-[10%] object-cover object-center"
         />
         {/* Dark base overlay — keeps text legible */}
         <div className="absolute inset-0 bg-background/75"></div>
