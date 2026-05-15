@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import emailjs from "@emailjs/browser";
-import { motion, AnimatePresence, useScroll, useTransform, type Variants } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useInView, type Variants } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
@@ -84,6 +84,29 @@ const staggerContainer: Variants = {
     transition: { staggerChildren: 0.2 }
   }
 };
+
+function CountUp({ to, suffix = "", decimals = 0 }: { to: number; suffix?: string; decimals?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const [display, setDisplay] = useState("0");
+
+  useEffect(() => {
+    if (!isInView) return;
+    const duration = 1800;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = to * eased;
+      setDisplay(decimals > 0 ? current.toFixed(decimals) : Math.floor(current).toString());
+      if (progress < 1) requestAnimationFrame(tick);
+      else setDisplay(decimals > 0 ? to.toFixed(decimals) : to.toString());
+    };
+    requestAnimationFrame(tick);
+  }, [isInView, to, decimals]);
+
+  return <span ref={ref}>{display}{suffix}</span>;
+}
 
 function App() {
   const { toast } = useToast();
@@ -364,15 +387,21 @@ function App() {
 
           <div className="grid grid-cols-3 gap-8 border-t border-border pt-16">
             <div>
-              <div className="text-4xl md:text-5xl font-serif text-primary mb-2">500+</div>
+              <div className="text-4xl md:text-5xl font-serif text-primary mb-2">
+                <CountUp to={500} suffix="+" />
+              </div>
               <div className="text-sm tracking-widest text-muted-foreground uppercase">Dishes Served</div>
             </div>
             <div>
-              <div className="text-4xl md:text-5xl font-serif text-primary mb-2">4.9</div>
+              <div className="text-4xl md:text-5xl font-serif text-primary mb-2">
+                <CountUp to={4.9} decimals={1} />
+              </div>
               <div className="text-sm tracking-widest text-muted-foreground uppercase">Guest Rating</div>
             </div>
             <div>
-              <div className="text-4xl md:text-5xl font-serif text-primary mb-2">2024</div>
+              <div className="text-4xl md:text-5xl font-serif text-primary mb-2">
+                <CountUp to={2024} />
+              </div>
               <div className="text-sm tracking-widest text-muted-foreground uppercase">Established</div>
             </div>
           </div>
