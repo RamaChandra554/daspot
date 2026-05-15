@@ -449,17 +449,17 @@ function App() {
       </section>
 
       {/* RESERVATION SECTION */}
-      <section id="reserve" className="py-32 px-6">
+      <section id="reserve" className="py-12 md:py-32 px-4 md:px-6">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={fadeInUp}
-          className="container mx-auto max-w-[560px]"
+          className="w-full mx-auto max-w-[560px]"
         >
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 md:mb-12">
             <p className="text-primary tracking-[0.3em] text-xs font-bold mb-4">— JOIN US —</p>
-            <h2 className="font-serif text-4xl md:text-5xl font-bold">Reserve Your Table</h2>
+            <h2 className="font-serif text-3xl md:text-5xl font-bold">Reserve Your Table</h2>
             <p className="text-muted-foreground text-sm mt-4">
               A confirmation will be sent to your email.
             </p>
@@ -476,7 +476,7 @@ function App() {
                       <Input
                         placeholder="Full Name"
                         {...field}
-                        className="bg-[#111] border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
+                        className="w-full bg-[#111] border-0 border-b border-border rounded-none px-2 py-4 md:py-6 text-base md:text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
                       />
                     </FormControl>
                     <FormMessage />
@@ -494,7 +494,7 @@ function App() {
                         placeholder="Email Address"
                         type="email"
                         {...field}
-                        className="bg-[#111]  border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
+                        className="w-full bg-[#111] border-0 border-b border-border rounded-none px-2 py-4 md:py-6 text-base md:text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
                       />
                     </FormControl>
                     <FormMessage />
@@ -512,7 +512,7 @@ function App() {
                         placeholder="Phone Number"
                         type="tel"
                         {...field}
-                        className="bg-[#111] border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
+                        className="w-full bg-[#111] border-0 border-b border-border rounded-none px-2 py-4 md:py-6 text-base md:text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
                       />
                     </FormControl>
                     <FormMessage />
@@ -520,7 +520,7 @@ function App() {
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="guests"
@@ -534,7 +534,7 @@ function App() {
                           max="10"
                           {...field}
                           value={field.value ?? ""}
-                          className="bg-[#111] border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
+                          className="w-full bg-[#111] border-0 border-b border-border rounded-none px-2 py-4 md:py-6 text-base md:text-lg focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 transition-colors"
                         />
                       </FormControl>
                       <FormMessage />
@@ -551,7 +551,7 @@ function App() {
                           type="date"
                           {...field}
                           min={new Date().toISOString().split("T")[0]}
-                          className="bg-[#111] border-0 border-b border-border rounded-none px-2 py-6 text-lg focus-visible:ring-0 focus-visible:border-primary text-foreground transition-colors [color-scheme:dark]"
+                          className="w-full bg-[#111] border-0 border-b border-border rounded-none px-2 py-4 md:py-6 text-base md:text-lg focus-visible:ring-0 focus-visible:border-primary text-foreground transition-colors [color-scheme:dark]"
                         />
                       </FormControl>
                       <FormMessage />
