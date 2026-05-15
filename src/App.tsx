@@ -387,7 +387,7 @@ function App() {
             <h2 className="font-serif text-4xl md:text-5xl font-bold">A Feast For The Eyes</h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4">
             {gallery.map((img, idx) => (
               <motion.div
                 key={idx}
@@ -415,22 +415,22 @@ function App() {
             <h2 className="font-serif text-4xl md:text-5xl font-bold">What Our Guests Say</h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-8">
             {reviews.map((review, idx) => (
               <motion.div
                 key={idx}
                 variants={fadeInUp}
-                className="bg-background border border-white/[0.07] p-8 flex flex-col items-center text-center group hover:border-primary/30 transition-colors"
+                className="bg-background border border-white/[0.07] p-2.5 sm:p-5 md:p-8 flex flex-col items-center text-center group hover:border-primary/30 transition-colors"
               >
-                <div className="flex gap-1 text-primary mb-6">
+                <div className="flex gap-0.5 sm:gap-1 text-primary mb-2 sm:mb-4 md:mb-6">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={16} fill="currentColor" />
+                    <Star key={i} size={8} className="sm:w-3 sm:h-3 md:w-4 md:h-4" fill="currentColor" />
                   ))}
                 </div>
-                <p className="font-serif italic text-lg text-muted-foreground mb-8">"{review.quote}"</p>
+                <p className="font-serif italic text-[8px] sm:text-xs md:text-lg text-muted-foreground mb-2 sm:mb-4 md:mb-8 leading-snug">"{review.quote}"</p>
                 <div className="mt-auto">
-                  <p className="font-bold tracking-wider uppercase text-sm mb-1">{review.name}</p>
-                  <p className="text-xs text-primary uppercase tracking-widest">Verified Guest</p>
+                  <p className="font-bold tracking-wider uppercase text-[7px] sm:text-xs md:text-sm mb-0.5 sm:mb-1">{review.name}</p>
+                  <p className="text-[6px] sm:text-[10px] md:text-xs text-primary uppercase tracking-widest">Verified Guest</p>
                 </div>
               </motion.div>
             ))}
