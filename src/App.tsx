@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import emailjs from "@emailjs/browser";
 import { motion, type Variants } from "framer-motion";
-import { Star } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -89,6 +89,7 @@ function App() {
   const [isNavScrolled, setIsNavScrolled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   // if (typeof window !== "undefined") {
   //   window.addEventListener("scroll", () => {
@@ -100,13 +101,20 @@ function App() {
     const handleScroll = () => {
       setIsNavScrolled(window.scrollY > 50);
     };
-
     window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxIndex(null);
+      if (e.key === "ArrowRight") setLightboxIndex(i => i !== null ? (i + 1) % gallery.length : null);
+      if (e.key === "ArrowLeft") setLightboxIndex(i => i !== null ? (i - 1 + gallery.length) % gallery.length : null);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [lightboxIndex]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -374,7 +382,7 @@ function App() {
       </section>
 
       {/* GALLERY SECTION */}
-      <section id="gallery" className="py-32 px-6">
+      <section id="gallery" className="py-12 md:py-32 px-6">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -382,7 +390,7 @@ function App() {
           variants={staggerContainer}
           className="container mx-auto"
         >
-          <motion.div variants={fadeInUp} className="text-center mb-16">
+          <motion.div variants={fadeInUp} className="text-center mb-8 md:mb-16">
             <p className="text-primary tracking-[0.3em] text-xs font-bold mb-4">— THE EXPERIENCE —</p>
             <h2 className="font-serif text-4xl md:text-5xl font-bold">A Feast For The Eyes</h2>
           </motion.div>
@@ -392,7 +400,9 @@ function App() {
               <motion.div
                 key={idx}
                 variants={fadeInUp}
-                className="aspect-square overflow-hidden border border-transparent hover:border-primary/50 transition-colors duration-300 group"
+                onClick={() => setLightboxIndex(idx)}
+                className="aspect-square overflow-hidden border border-transparent hover:border-primary/50 transition-colors duration-300 group cursor-pointer"
+                data-testid={`gallery-image-${idx}`}
               >
                 <img src={img} alt={`Gallery image ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
               </motion.div>
@@ -402,7 +412,7 @@ function App() {
       </section>
 
       {/* REVIEWS SECTION */}
-      <section id="reviews" className="py-32 bg-[#111] px-6">
+      <section id="reviews" className="py-12 md:py-32 bg-[#111] px-6">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -410,7 +420,7 @@ function App() {
           variants={staggerContainer}
           className="container mx-auto"
         >
-          <motion.div variants={fadeInUp} className="text-center mb-16">
+          <motion.div variants={fadeInUp} className="text-center mb-8 md:mb-16">
             <p className="text-primary tracking-[0.3em] text-xs font-bold mb-4">— GUEST VOICES —</p>
             <h2 className="font-serif text-4xl md:text-5xl font-bold">What Our Guests Say</h2>
           </motion.div>
@@ -627,6 +637,65 @@ function App() {
           </p>
         </div>
       </footer>
+
+      {/* LIGHTBOX MODAL */}
+      {lightboxIndex !== null && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          onClick={() => setLightboxIndex(null)}
+          data-testid="lightbox-overlay"
+        >
+          <button
+            onClick={() => setLightboxIndex(null)}
+            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors p-2"
+            data-testid="lightbox-close"
+          >
+            <X size={28} />
+          </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxIndex((lightboxIndex - 1 + gallery.length) % gallery.length); }}
+            className="absolute left-3 md:left-8 text-white/70 hover:text-white transition-colors p-2"
+            data-testid="lightbox-prev"
+          >
+            <ChevronLeft size={36} />
+          </button>
+
+          <motion.img
+            key={lightboxIndex}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.25 }}
+            src={gallery[lightboxIndex]}
+            alt={`Gallery image ${lightboxIndex + 1}`}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[85vh] max-w-[90vw] md:max-w-[80vw] object-contain shadow-2xl"
+            data-testid="lightbox-image"
+          />
+
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxIndex((lightboxIndex + 1) % gallery.length); }}
+            className="absolute right-3 md:right-8 text-white/70 hover:text-white transition-colors p-2"
+            data-testid="lightbox-next"
+          >
+            <ChevronRight size={36} />
+          </button>
+
+          <div className="absolute bottom-5 flex gap-2">
+            {gallery.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === lightboxIndex ? "bg-primary" : "bg-white/30"}`}
+                data-testid={`lightbox-dot-${i}`}
+              />
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
