@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -90,6 +90,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const touchStartX = useRef<number>(0);
 
   // if (typeof window !== "undefined") {
   //   window.addEventListener("scroll", () => {
@@ -569,7 +570,7 @@ function App() {
                     <div className="pt-2 space-y-4">
                       {(Object.entries(TIME_SLOTS) as [string, string[]][]).map(([period, slots]) => (
                         <div key={period}>
-                          <p className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground/60 mb-3">
+                          <p className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground/90 mb-3">
                             — {period} —
                           </p>
                           <div className="flex flex-wrap gap-2">
@@ -632,7 +633,7 @@ function App() {
 
           <div className="w-24 h-px bg-primary/50 mx-auto mb-10"></div>
 
-          <p className="text-[10px] text-muted-foreground/50 tracking-widest uppercase">
+          <p className="text-[10px] text-muted-foreground/75 tracking-widest uppercase">
             © 2024 DA SPOT. All Rights Reserved.
           </p>
         </div>
@@ -646,6 +647,14 @@ function App() {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm"
           onClick={() => setLightboxIndex(null)}
+          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => {
+            const delta = touchStartX.current - e.changedTouches[0].clientX;
+            if (Math.abs(delta) > 50) {
+              if (delta > 0) setLightboxIndex(i => i !== null ? (i + 1) % gallery.length : null);
+              else setLightboxIndex(i => i !== null ? (i - 1 + gallery.length) % gallery.length : null);
+            }
+          }}
           data-testid="lightbox-overlay"
         >
           <button
