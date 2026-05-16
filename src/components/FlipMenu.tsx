@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAnimation, motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import daSpotLogo from "@/assets/da-spot-logo.jpeg";
 
@@ -292,11 +292,6 @@ function Page({ data, side }: { data: PageData; side: "L" | "R" }) {
   return <div className="w-full h-full" style={{ background: bg }} />;
 }
 
-/* ─── FLIP BOOK ──────────────────────────────────────────────── */
-
-const FLIP_DURATION = 1.5;
-const EASE: [number, number, number, number] = [0.22, 0.61, 0.36, 1];
-
 /* ─── MOBILE SLIDE VARIANTS ─────────────────────────────────── */
 const mobileVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
@@ -304,8 +299,11 @@ const mobileVariants = {
   exit:  (dir: number) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0 }),
 };
 
+/* ─── FLIP BOOK ──────────────────────────────────────────────── */
+
+const FLIP_MS = 700;
+
 export function FlipMenu() {
-  /* ── ALL HOOKS FIRST (Rules of Hooks) ── */
 
   /* mobile detection */
   const [isMobile, setIsMobile] = useState(
@@ -323,13 +321,17 @@ export function FlipMenu() {
   const totalPages = allPages.length;
   const mobileTouchX = useRef<number | null>(null);
 
-  /* desktop two-page spread state */
+  /* desktop spread state */
   const [spreadIndex, setSpreadIndex] = useState(0);
-  const [isFlipping, setIsFlipping] = useState(false);
+  const [flipping, setFlipping] = useState(false);
   const [flipDir, setFlipDir] = useState<"fwd" | "bwd">("fwd");
-  const pendingRef = useRef(0);
-  const controls = useAnimation();
+  const [fromIdx, setFromIdx] = useState(0);
+  const [toIdx, setToIdx]     = useState(1);
   const touchX = useRef<number | null>(null);
+  const total = spreads.length;
+
+  const canNext = !flipping && spreadIndex < total - 1;
+  const canPrev = !flipping && spreadIndex > 0;
 
   /* ── mobile callbacks ── */
   const mobileNext = useCallback(() => {
@@ -356,49 +358,45 @@ export function FlipMenu() {
   }, [mobileNext, mobilePrev]);
 
   /* ── desktop callbacks ── */
-  const total = spreads.length;
-  const canNext = !isFlipping && spreadIndex < total - 1;
-  const canPrev = !isFlipping && spreadIndex > 0;
-
-  const goNext = useCallback(async () => {
+  const goNext = useCallback(() => {
     if (!canNext) return;
     const target = spreadIndex + 1;
-    pendingRef.current = target;
+    setFromIdx(spreadIndex);
+    setToIdx(target);
     setFlipDir("fwd");
-    setIsFlipping(true);
-    controls.set({ rotateY: 0 });
-    await controls.start({ rotateY: -180, transition: { duration: FLIP_DURATION, ease: EASE } });
-    setSpreadIndex(target);
-    controls.set({ rotateY: 0 });
-    setIsFlipping(false);
-  }, [canNext, spreadIndex, controls]);
+    setFlipping(true);
+    setTimeout(() => {
+      setSpreadIndex(target);
+      setFlipping(false);
+    }, FLIP_MS);
+  }, [canNext, spreadIndex]);
 
-  const goPrev = useCallback(async () => {
+  const goPrev = useCallback(() => {
     if (!canPrev) return;
     const target = spreadIndex - 1;
-    pendingRef.current = target;
+    setFromIdx(spreadIndex);
+    setToIdx(target);
     setFlipDir("bwd");
-    setIsFlipping(true);
-    controls.set({ rotateY: 0 });
-    await controls.start({ rotateY: 180, transition: { duration: FLIP_DURATION, ease: EASE } });
-    setSpreadIndex(target);
-    controls.set({ rotateY: 0 });
-    setIsFlipping(false);
-  }, [canPrev, spreadIndex, controls]);
+    setFlipping(true);
+    setTimeout(() => {
+      setSpreadIndex(target);
+      setFlipping(false);
+    }, FLIP_MS);
+  }, [canPrev, spreadIndex]);
 
-  /* keyboard (desktop) */
+  /* keyboard */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (isMobile) return;
       if (e.key === "ArrowRight") goNext();
-      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowLeft")  goPrev();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [goNext, goPrev, isMobile]);
 
   const onTouchStart = useCallback((e: React.TouchEvent) => { touchX.current = e.touches[0].clientX; }, []);
-  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+  const onTouchEnd   = useCallback((e: React.TouchEvent) => {
     if (touchX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchX.current;
     touchX.current = null;
@@ -406,20 +404,24 @@ export function FlipMenu() {
     if (dx < 0) goNext(); else goPrev();
   }, [goNext, goPrev]);
 
-  /* ── derived desktop values ── */
-  const cur = spreads[spreadIndex];
-  const next = spreads[Math.min(spreadIndex + 1, total - 1)];
-  const prev = spreads[Math.max(spreadIndex - 1, 0)];
-  const flipLeft = flipDir === "fwd" ? "50%" : "0";
-  const flipOrigin = flipDir === "fwd" ? "left center" : "right center";
-  const flipFront = flipDir === "fwd" ? cur[1] : cur[0];
-  const flipBack  = flipDir === "fwd" ? next[0] : prev[1];
-  const bgLeft    = flipDir === "fwd" ? cur[0] : prev[0];
-  const bgRight   = flipDir === "fwd" ? next[1] : cur[1];
-  const spineOpacity = isFlipping ? 0.9 : 0.5;
+  /* ── derived spread pages ── */
+  const cur  = spreads[spreadIndex];
+  const from = spreads[fromIdx];
+  const to   = spreads[toIdx];
+
+  /*
+   * During forward flip:   static left = from[0], static right = to[1]
+   *   flip element covers right half: front = from[1], back = to[0]
+   * During backward flip:  static left = to[0],   static right = from[1]
+   *   flip element covers left half:  front = from[0], back = to[1]
+   */
+  const staticLeft  = flipping ? (flipDir === "fwd" ? from[0] : to[0])   : cur[0];
+  const staticRight = flipping ? (flipDir === "fwd" ? to[1]   : from[1]) : cur[1];
+  const flipFront   = flipDir === "fwd" ? from[1] : from[0];
+  const flipBack    = flipDir === "fwd" ? to[0]   : to[1];
 
   /* ══════════════════════════════════════════
-     MOBILE RENDER — single page slide
+     MOBILE RENDER
   ══════════════════════════════════════════ */
   if (isMobile) {
     const page = allPages[mobilePageIndex];
@@ -469,7 +471,6 @@ export function FlipMenu() {
             style={{ background: "linear-gradient(90deg,transparent,rgba(255,46,46,0.4),transparent)" }} />
         </div>
 
-        {/* mobile controls */}
         <div className="flex items-center gap-6 mt-6">
           <button
             onClick={mobilePrev}
@@ -477,8 +478,7 @@ export function FlipMenu() {
             className="flex items-center gap-1 text-[11px] tracking-widest uppercase font-sans transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed"
             style={{ color: canMobilePrev ? "#ff2e2e" : "rgba(245,240,232,0.3)" }}
           >
-            <ChevronLeft size={14} />
-            Prev
+            <ChevronLeft size={14} /> Prev
           </button>
 
           <div className="flex items-center gap-[5px]">
@@ -505,8 +505,7 @@ export function FlipMenu() {
             className="flex items-center gap-1 text-[11px] tracking-widest uppercase font-sans transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed"
             style={{ color: canMobileNext ? "#ff2e2e" : "rgba(245,240,232,0.3)" }}
           >
-            Next
-            <ChevronRight size={14} />
+            Next <ChevronRight size={14} />
           </button>
         </div>
 
@@ -519,175 +518,141 @@ export function FlipMenu() {
   }
 
   /* ══════════════════════════════════════════
-     DESKTOP RENDER — two-page book spread
+     DESKTOP RENDER — CSS keyframe flip
   ══════════════════════════════════════════ */
   return (
     <div className="flex flex-col items-center w-full">
 
-      {/* ── BOOK ── */}
+      {/* Book container — perspective must be on the parent */}
       <div
-        className="relative"
-        style={{ perspective: "3000px", perspectiveOrigin: "center 40%" }}
+        style={{ perspective: "2500px", perspectiveOrigin: "50% 40%" }}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         data-testid="flip-book"
       >
         <div
-          className="relative overflow-hidden"
           style={{
+            position: "relative",
             width: "min(1100px, 96vw)",
             height: "min(680px, 62vw)",
-            boxShadow: "0 40px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)",
+            boxShadow: "0 40px 100px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.04)",
           }}
         >
-          {/* Left BG */}
-          <div className="absolute top-0 left-0 h-full overflow-hidden"
-            style={{ width: "50%", zIndex: 1 }}>
-            <Page data={isFlipping ? bgLeft : cur[0]} side="L" />
-            <div className="absolute inset-y-0 right-0 w-10 pointer-events-none"
-              style={{ background: "linear-gradient(to left,rgba(0,0,0,0.45),transparent)", zIndex: 2 }} />
+          {/* ── Static left page ── */}
+          <div style={{ position: "absolute", top: 0, left: 0, width: "50%", height: "100%", overflow: "hidden", zIndex: 1 }}>
+            <Page data={staticLeft} side="L" />
+            <div style={{ position: "absolute", inset: 0, right: 0, width: 48, background: "linear-gradient(to left,rgba(0,0,0,0.5),transparent)", pointerEvents: "none", zIndex: 2 }} />
           </div>
 
-          {/* Right BG */}
-          <div className="absolute top-0 right-0 h-full overflow-hidden"
-            style={{ width: "50%", zIndex: 1 }}>
-            <Page data={isFlipping ? bgRight : cur[1]} side="R" />
-            <div className="absolute inset-y-0 left-0 w-10 pointer-events-none"
-              style={{ background: "linear-gradient(to right,rgba(0,0,0,0.45),transparent)", zIndex: 2 }} />
+          {/* ── Static right page ── */}
+          <div style={{ position: "absolute", top: 0, right: 0, width: "50%", height: "100%", overflow: "hidden", zIndex: 1 }}>
+            <Page data={staticRight} side="R" />
+            <div style={{ position: "absolute", inset: 0, left: 0, width: 48, background: "linear-gradient(to right,rgba(0,0,0,0.5),transparent)", pointerEvents: "none", zIndex: 2 }} />
           </div>
 
-          {/* Spine */}
-          <div className="absolute top-0 bottom-0 pointer-events-none"
-            style={{
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "3px",
-              background: `linear-gradient(to bottom,transparent,rgba(255,46,46,${spineOpacity}),rgba(255,46,46,${spineOpacity}),transparent)`,
-              filter: "blur(1.5px)",
-              zIndex: 20,
-              transition: "opacity 0.4s",
-            }} />
-
-          {/* Page thickness illusion */}
-          <div className="absolute left-0 right-0 top-0 h-[6px] pointer-events-none"
-            style={{ background: "linear-gradient(to bottom,rgba(255,255,255,0.05),transparent)", zIndex: 5 }} />
-          <div className="absolute left-0 right-0 bottom-0 h-[6px] pointer-events-none"
-            style={{ background: "linear-gradient(to top,rgba(0,0,0,0.4),transparent)", zIndex: 5 }} />
-
-          {/* Animated flip page */}
-          {isFlipping && (
+          {/* ── Flipping page (CSS keyframe 3D) ── */}
+          {flipping && (
             <div
-              className="absolute top-0 h-full overflow-visible"
-              style={{ width: "50%", left: flipLeft, zIndex: 15, transformStyle: "preserve-3d" }}
+              style={{
+                position: "absolute",
+                top: 0,
+                height: "100%",
+                width: "50%",
+                zIndex: 10,
+                transformStyle: "preserve-3d",
+                ...(flipDir === "fwd"
+                  ? {
+                      left: "50%",
+                      transformOrigin: "0% 50%",
+                      animation: `daspot-flip-fwd ${FLIP_MS}ms cubic-bezier(0.645,0.045,0.355,1.000) forwards`,
+                    }
+                  : {
+                      left: 0,
+                      transformOrigin: "100% 50%",
+                      animation: `daspot-flip-bwd ${FLIP_MS}ms cubic-bezier(0.645,0.045,0.355,1.000) forwards`,
+                    }),
+              }}
             >
-              <motion.div
-                animate={controls}
-                style={{
-                  width: "100%", height: "100%",
-                  transformStyle: "preserve-3d",
-                  transformOrigin: flipOrigin,
-                  position: "relative",
-                }}
-              >
-                {/* Front face */}
-                <div className="absolute inset-0 overflow-hidden"
-                  style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
-                  <Page data={flipFront} side={flipDir === "fwd" ? "R" : "L"} />
-                  <div className="absolute inset-y-0 pointer-events-none"
-                    style={{
-                      [flipDir === "fwd" ? "left" : "right"]: 0, width: "55%",
-                      background: flipDir === "fwd"
-                        ? "linear-gradient(to left,rgba(0,0,0,0.7),transparent)"
-                        : "linear-gradient(to right,rgba(0,0,0,0.7),transparent)",
-                    }} />
-                  <div className="absolute inset-y-0 pointer-events-none"
-                    style={{
-                      [flipDir === "fwd" ? "right" : "left"]: 0, width: "18px",
-                      background: flipDir === "fwd"
-                        ? "linear-gradient(to right,transparent,rgba(255,255,255,0.06))"
-                        : "linear-gradient(to left,transparent,rgba(255,255,255,0.06))",
-                    }} />
-                </div>
+              {/* Front face — visible at start of animation */}
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+                <Page data={flipFront} side={flipDir === "fwd" ? "R" : "L"} />
+                {/* Page-curl shadow on spine edge */}
+                <div style={{
+                  position: "absolute", inset: 0,
+                  background: flipDir === "fwd"
+                    ? "linear-gradient(to left, rgba(0,0,0,0.0) 70%, rgba(0,0,0,0.35) 100%)"
+                    : "linear-gradient(to right, rgba(0,0,0,0.0) 70%, rgba(0,0,0,0.35) 100%)",
+                  pointerEvents: "none",
+                }} />
+              </div>
 
-                {/* Back face */}
-                <div className="absolute inset-0 overflow-hidden"
-                  style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-                  <Page data={flipBack} side={flipDir === "fwd" ? "L" : "R"} />
-                  <div className="absolute inset-y-0 pointer-events-none"
-                    style={{
-                      [flipDir === "fwd" ? "right" : "left"]: 0, width: "55%",
-                      background: flipDir === "fwd"
-                        ? "linear-gradient(to right,rgba(0,0,0,0.55),transparent)"
-                        : "linear-gradient(to left,rgba(0,0,0,0.55),transparent)",
-                    }} />
-                </div>
-              </motion.div>
+              {/* Back face — revealed as page flips */}
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+                <Page data={flipBack} side={flipDir === "fwd" ? "L" : "R"} />
+              </div>
             </div>
           )}
 
-          {/* Corner flip zones */}
-          {!isFlipping && canNext && (
-            <button onClick={goNext} data-testid="flip-corner-next" aria-label="Next page"
-              className="absolute bottom-0 right-0 z-30 group"
-              style={{ width: 60, height: 60, background: "transparent", border: "none", cursor: "pointer" }}>
-              <div className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{ borderLeft: "42px solid transparent", borderBottom: "42px solid rgba(255,46,46,0.18)" }} />
-            </button>
-          )}
-          {!isFlipping && canPrev && (
-            <button onClick={goPrev} data-testid="flip-corner-prev" aria-label="Previous page"
-              className="absolute bottom-0 left-0 z-30 group"
-              style={{ width: 60, height: 60, background: "transparent", border: "none", cursor: "pointer" }}>
-              <div className="absolute bottom-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{ borderRight: "42px solid transparent", borderBottom: "42px solid rgba(255,46,46,0.18)" }} />
-            </button>
-          )}
+          {/* ── Spine ── */}
+          <div style={{
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 3,
+            height: "100%",
+            zIndex: 20,
+            background: "linear-gradient(to right,#1a0000,#2d0000,#1a0000)",
+            boxShadow: "0 0 12px rgba(0,0,0,0.9)",
+            pointerEvents: "none",
+          }} />
+
+          {/* ── Clickable corner zones ── */}
+          <button
+            onClick={goNext}
+            disabled={!canNext}
+            aria-label="Next page"
+            style={{ position: "absolute", right: 0, bottom: 0, width: 100, height: 100, zIndex: 25, background: "transparent", border: "none", cursor: canNext ? "pointer" : "default", opacity: 0 }}
+          />
+          <button
+            onClick={goPrev}
+            disabled={!canPrev}
+            aria-label="Previous page"
+            style={{ position: "absolute", left: 0, bottom: 0, width: 100, height: 100, zIndex: 25, background: "transparent", border: "none", cursor: canPrev ? "pointer" : "default", opacity: 0 }}
+          />
         </div>
       </div>
 
-      {/* Desktop controls */}
-      <div className="flex items-center gap-8 mt-9">
+      {/* ── Controls ── */}
+      <div className="flex items-center gap-10 mt-8">
         <button
-          onClick={goPrev} disabled={!canPrev} data-testid="flip-prev"
-          className="group flex items-center gap-2 text-[10px] tracking-widest uppercase font-sans transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed"
-          style={{ color: "rgba(245,240,232,0.55)" }}
-          onMouseEnter={(e) => { if (canPrev) (e.currentTarget as HTMLElement).style.color = "#ff2e2e"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(245,240,232,0.55)"; }}
+          onClick={goPrev}
+          disabled={!canPrev}
+          data-testid="flip-prev"
+          className="flex items-center gap-2 text-[11px] tracking-widest uppercase font-sans transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed"
+          style={{ color: canPrev ? "#ff2e2e" : "rgba(245,240,232,0.3)" }}
         >
-          <ChevronLeft size={13} className="group-hover:-translate-x-1 transition-transform duration-300" />
-          Prev
+          <ChevronLeft size={14} /> Prev
         </button>
 
-        <div className="flex items-center gap-[6px]">
-          {spreads.map((_, i) => (
-            <button key={i}
-              onClick={() => { if (!isFlipping && i !== spreadIndex) setSpreadIndex(i); }}
-              data-testid={`spread-dot-${i}`}
-              style={{
-                width: i === spreadIndex ? 22 : 6, height: 2,
-                background: i === spreadIndex ? "#ff2e2e" : "rgba(255,255,255,0.12)",
-                border: "none", padding: 0, cursor: "pointer",
-                transition: "width 0.3s, background 0.3s",
-              }}
-            />
-          ))}
-        </div>
+        <span className="text-[10px] tracking-[0.3em] font-sans"
+          style={{ color: "rgba(245,240,232,0.25)" }}>
+          {spreadIndex * 2 + 1}–{Math.min(spreadIndex * 2 + 2, allPages.length)} / {allPages.length}
+        </span>
 
         <button
-          onClick={goNext} disabled={!canNext} data-testid="flip-next"
-          className="group flex items-center gap-2 text-[10px] tracking-widest uppercase font-sans transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed"
-          style={{ color: "rgba(245,240,232,0.55)" }}
-          onMouseEnter={(e) => { if (canNext) (e.currentTarget as HTMLElement).style.color = "#ff2e2e"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(245,240,232,0.55)"; }}
+          onClick={goNext}
+          disabled={!canNext}
+          data-testid="flip-next"
+          className="flex items-center gap-2 text-[11px] tracking-widest uppercase font-sans transition-all duration-300 disabled:opacity-20 disabled:cursor-not-allowed"
+          style={{ color: canNext ? "#ff2e2e" : "rgba(245,240,232,0.3)" }}
         >
-          Next
-          <ChevronRight size={13} className="group-hover:translate-x-1 transition-transform duration-300" />
+          Next <ChevronRight size={14} />
         </button>
       </div>
 
       <p className="mt-3 text-[9px] tracking-[0.35em] font-sans uppercase"
-        style={{ color: "rgba(245,240,232,0.18)" }}>
-        {spreadIndex + 1} / {total} — arrow keys or swipe to turn pages
+        style={{ color: "rgba(245,240,232,0.15)" }}>
+        click corners or use arrow keys to turn pages
       </p>
     </div>
   );

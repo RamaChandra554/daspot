@@ -152,3 +152,13 @@
     pointer-events: none;
   }
 }
+
+/* ── Book page flip keyframes ─────────────────────────────────── */
+@keyframes daspot-flip-fwd {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-180deg); }
+}
+@keyframes daspot-flip-bwd {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(180deg); }
+}
