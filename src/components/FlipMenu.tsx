@@ -541,13 +541,11 @@ export function FlipMenu() {
           {/* ── Static left page ── */}
           <div style={{ position: "absolute", top: 0, left: 0, width: "50%", height: "100%", overflow: "hidden", zIndex: 1 }}>
             <Page data={staticLeft} side="L" />
-            <div style={{ position: "absolute", inset: 0, right: 0, width: 48, background: "linear-gradient(to left,rgba(0,0,0,0.5),transparent)", pointerEvents: "none", zIndex: 2 }} />
           </div>
 
           {/* ── Static right page ── */}
           <div style={{ position: "absolute", top: 0, right: 0, width: "50%", height: "100%", overflow: "hidden", zIndex: 1 }}>
             <Page data={staticRight} side="R" />
-            <div style={{ position: "absolute", inset: 0, left: 0, width: 48, background: "linear-gradient(to right,rgba(0,0,0,0.5),transparent)", pointerEvents: "none", zIndex: 2 }} />
           </div>
 
           {/* ── Flipping page (CSS keyframe 3D) ── */}
@@ -634,10 +632,31 @@ export function FlipMenu() {
           <ChevronLeft size={14} /> Prev
         </button>
 
-        <span className="text-[10px] tracking-[0.3em] font-sans"
-          style={{ color: "rgba(245,240,232,0.25)" }}>
-          {spreadIndex * 2 + 1}–{Math.min(spreadIndex * 2 + 2, allPages.length)} / {allPages.length}
-        </span>
+        <div className="flex items-center gap-[5px]">
+          {spreads.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                if (flipping || i === spreadIndex) return;
+                setFromIdx(spreadIndex);
+                setToIdx(i);
+                setFlipDir(i > spreadIndex ? "fwd" : "bwd");
+                setFlipping(true);
+                setTimeout(() => { setSpreadIndex(i); setFlipping(false); }, FLIP_MS);
+              }}
+              style={{
+                width: i === spreadIndex ? 18 : 5,
+                height: 2,
+                background: i === spreadIndex ? "#ff2e2e" : "rgba(255,255,255,0.18)",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                transition: "width 0.3s, background 0.3s",
+              }}
+              aria-label={`Go to spread ${i + 1}`}
+            />
+          ))}
+        </div>
 
         <button
           onClick={goNext}
@@ -651,7 +670,7 @@ export function FlipMenu() {
       </div>
 
       <p className="mt-3 text-[9px] tracking-[0.35em] font-sans uppercase"
-        style={{ color: "rgba(245,240,232,0.15)" }}>
+        style={{ color: "rgba(245,240,232,0.45)" }}>
         click corners or use arrow keys to turn pages
       </p>
     </div>
