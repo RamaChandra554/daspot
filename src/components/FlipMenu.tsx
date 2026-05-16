@@ -327,6 +327,7 @@ export function FlipMenu() {
   const [flipDir, setFlipDir] = useState<"fwd" | "bwd">("fwd");
   const [fromIdx, setFromIdx] = useState(0);
   const [toIdx, setToIdx]     = useState(1);
+  const [hoverSide, setHoverSide] = useState<"left" | "right" | null>(null);
   const touchX = useRef<number | null>(null);
   const total = spreads.length;
 
@@ -465,6 +466,24 @@ export function FlipMenu() {
                 <Page data={page} side="L" />
               </motion.div>
             </AnimatePresence>
+
+            {/* Tap zones — left 35% prev, right 35% next */}
+            <button
+              onClick={mobilePrev}
+              disabled={!canMobilePrev}
+              aria-label="Previous page"
+              style={{ position: "absolute", left: 0, top: 0, width: "35%", height: "100%", zIndex: 15, background: "transparent", border: "none", cursor: canMobilePrev ? "pointer" : "default" }}
+            >
+              <span style={{ position: "absolute", left: "18%", top: "50%", transform: "translateY(-50%)", opacity: canMobilePrev ? 0.35 : 0, color: "#ff2e2e", fontSize: 22, fontFamily: "serif", pointerEvents: "none", userSelect: "none", transition: "opacity 0.2s" }}>‹</span>
+            </button>
+            <button
+              onClick={mobileNext}
+              disabled={!canMobileNext}
+              aria-label="Next page"
+              style={{ position: "absolute", right: 0, top: 0, width: "35%", height: "100%", zIndex: 15, background: "transparent", border: "none", cursor: canMobileNext ? "pointer" : "default" }}
+            >
+              <span style={{ position: "absolute", right: "18%", top: "50%", transform: "translateY(-50%)", opacity: canMobileNext ? 0.35 : 0, color: "#ff2e2e", fontSize: 22, fontFamily: "serif", pointerEvents: "none", userSelect: "none", transition: "opacity 0.2s" }}>›</span>
+            </button>
           </div>
 
           <div className="w-full h-[2px] mt-1"
@@ -510,8 +529,8 @@ export function FlipMenu() {
         </div>
 
         <p className="mt-3 text-[9px] tracking-[0.35em] font-sans uppercase"
-          style={{ color: "rgba(245,240,232,0.18)" }}>
-          {mobilePageIndex + 1} / {totalPages} — swipe to turn
+          style={{ color: "rgba(245,240,232,0.45)" }}>
+          tap sides or swipe to turn
         </p>
       </div>
     );
@@ -604,19 +623,45 @@ export function FlipMenu() {
             pointerEvents: "none",
           }} />
 
-          {/* ── Clickable side zones (35% width, full height) ── */}
+          {/* ── Clickable side zones (35% width, full height) with hover arrow hints ── */}
           <button
             onClick={goNext}
             disabled={!canNext}
             aria-label="Next page"
+            onMouseEnter={() => setHoverSide("right")}
+            onMouseLeave={() => setHoverSide(null)}
             style={{ position: "absolute", right: 0, top: 0, width: "35%", height: "100%", zIndex: 25, background: "transparent", border: "none", cursor: canNext ? "pointer" : "default" }}
-          />
+          >
+            <span style={{
+              position: "absolute", right: "18%", top: "50%",
+              transform: "translateY(-50%)",
+              opacity: hoverSide === "right" && canNext ? 1 : 0,
+              transition: "opacity 0.2s",
+              color: "rgba(255,46,46,0.75)",
+              fontSize: 32, fontFamily: "serif",
+              pointerEvents: "none", userSelect: "none",
+              textShadow: "0 0 12px rgba(255,46,46,0.4)",
+            }}>›</span>
+          </button>
           <button
             onClick={goPrev}
             disabled={!canPrev}
             aria-label="Previous page"
+            onMouseEnter={() => setHoverSide("left")}
+            onMouseLeave={() => setHoverSide(null)}
             style={{ position: "absolute", left: 0, top: 0, width: "35%", height: "100%", zIndex: 25, background: "transparent", border: "none", cursor: canPrev ? "pointer" : "default" }}
-          />
+          >
+            <span style={{
+              position: "absolute", left: "18%", top: "50%",
+              transform: "translateY(-50%)",
+              opacity: hoverSide === "left" && canPrev ? 1 : 0,
+              transition: "opacity 0.2s",
+              color: "rgba(255,46,46,0.75)",
+              fontSize: 32, fontFamily: "serif",
+              pointerEvents: "none", userSelect: "none",
+              textShadow: "0 0 12px rgba(255,46,46,0.4)",
+            }}>‹</span>
+          </button>
         </div>
       </div>
 
