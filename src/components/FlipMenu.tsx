@@ -604,18 +604,18 @@ export function FlipMenu() {
             pointerEvents: "none",
           }} />
 
-          {/* ── Clickable corner zones ── */}
+          {/* ── Clickable side zones (35% width, full height) ── */}
           <button
             onClick={goNext}
             disabled={!canNext}
             aria-label="Next page"
-            style={{ position: "absolute", right: 0, bottom: 0, width: 100, height: 100, zIndex: 25, background: "transparent", border: "none", cursor: canNext ? "pointer" : "default", opacity: 0 }}
+            style={{ position: "absolute", right: 0, top: 0, width: "35%", height: "100%", zIndex: 25, background: "transparent", border: "none", cursor: canNext ? "pointer" : "default" }}
           />
           <button
             onClick={goPrev}
             disabled={!canPrev}
             aria-label="Previous page"
-            style={{ position: "absolute", left: 0, bottom: 0, width: 100, height: 100, zIndex: 25, background: "transparent", border: "none", cursor: canPrev ? "pointer" : "default", opacity: 0 }}
+            style={{ position: "absolute", left: 0, top: 0, width: "35%", height: "100%", zIndex: 25, background: "transparent", border: "none", cursor: canPrev ? "pointer" : "default" }}
           />
         </div>
       </div>
