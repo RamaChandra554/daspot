@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FlipMenu } from "@/components/FlipMenu";
-import daSpotLogo from "@/assets/da-spot-logo.jpeg";
+import daSpotLogo from "@/assets/da-spot-logo.png";
 import heroBg from "@/assets/image_1778811294437.png";
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";

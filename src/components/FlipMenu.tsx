@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import daSpotLogo from "@/assets/da-spot-logo.jpeg";
+import daSpotLogo from "@/assets/da-spot-logo.png";
 
 /* ─── DATA ──────────────────────────────────────────────────── */
 
