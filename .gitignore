@@ -5,6 +5,9 @@ node_modules
 dist
 dist-ssr
 
+# Replit uploaded assets (source files live in src/assets/)
+attached_assets
+
 # Environment variables
 .env
 .env.local
