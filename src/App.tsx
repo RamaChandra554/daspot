@@ -13,12 +13,12 @@ import { Button } from "@/components/ui/button";
 import { FlipMenu } from "@/components/FlipMenu";
 import daSpotLogo from "@/assets/da-spot-logo.jpeg";
 import heroBg from "@/assets/image_1778811294437.png";
-import gallery1 from "@/assets/gallery-1.png";
-import gallery2 from "@/assets/gallery-2.png";
-import gallery3 from "@/assets/gallery-3.png";
-import gallery4 from "@/assets/gallery-4.png";
+import gallery1 from "@/assets/gallery-1.jpg";
+import gallery2 from "@/assets/gallery-2.jpg";
+import gallery3 from "@/assets/gallery-3.jpg";
+import gallery4 from "@/assets/gallery-4.jpg";
 import gallery5 from "@/assets/gallery-5.png";
-import gallery6 from "@/assets/gallery-6.png";
+import gallery6 from "@/assets/gallery-6.webp";
 
 
 
